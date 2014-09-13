@@ -1,0 +1,17 @@
+{
+  "uuid": "1d139f51-14b0-4a9e-882e-91df056ff7fe",
+  "shortName": "pebblyo",
+  "longName": "pebblyo",
+  "companyName": "MakeAwesomeHappen",
+  "versionCode": 1,
+  "versionLabel": "1.0.0",
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
