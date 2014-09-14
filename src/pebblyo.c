@@ -266,26 +266,9 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
 
   Tuple *tuple = dict_read_first(received);
   while(tuple) {
-    /*if ((tuple->key)==0) {
-      changeOption(0, tuple->value->cstring);
-    } else if  ((tuple->key)==1) {
-      changeOption(1, tuple->value->cstring);
-    } else if  ((tuple->key)==2) {
-      changeOption(2, tuple->value->cstring);
-    } else if  ((tuple->key)==3) {
-      changeOption(3, tuple->value->cstring);
-    } else if  ((tuple->key)==4) {
-      changeOption(4, tuple->value->cstring);
-    } else if  ((tuple->key)==5) {
-      menu_layer_set_selected_index(menu_layer, MenuIndex(tuple->value->uint32, 0) , MenuRowAlignNone, true);
-    } else if ((tuple->key)==6) {
-      window_stack_push(messageWindow, true);
-    } else if ((tuple->key)==7) {
-      tuple->value->cstring = (char*)NULL;
-      window_stack_push(window, true);
-    }*/
-
     switch (tuple->key) {
+      case 0:
+        APP_LOG(APP_LOG_LEVEL_INFO, "got a 0");
       case 1:
         changeOption(0, tuple->value->cstring);
         APP_LOG(APP_LOG_LEVEL_INFO, "setting element 0");
@@ -391,9 +374,6 @@ static void timer_callback(void *data) {
     app_message_outbox_send();
   }
   oldangle=angle;
-  //angle = 100*(double)accel.z / (pow(pow((double)accel.x,2)+pow((double)accel.y,2)+pow((double)accel.z,2), 0.5));
-  //APP_LOG(APP_LOG_LEVEL_INFO, "%d, %d, %d", (int)accel.x, (int)accel.y, (int)accel.z);
-  //APP_LOG(APP_LOG_LEVEL_INFO, "%d", angle);
 
   timer = app_timer_register(ACCEL_STEP_MS, timer_callback, NULL);
 }
@@ -433,12 +413,7 @@ int main(void) {
 
   init();
 
-  changeOption(0, "Kavin");
-  changeOption(3, "Austin");
-
   window_stack_push(splash, true);
-
-  //window_stack_push(messageWindow, true /* Animated */);
 
   // Register AppMessage handlers
   app_message_register_inbox_received(in_received_handler);
