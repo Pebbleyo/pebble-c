@@ -3,9 +3,12 @@
 #define NUM_MENU_SECTIONS 1
 //#define NUM_MENU_ICONS 5
 #define NUM_FIRST_MENU_ITEMS 5
+#define ACCEL_STEP_MS 50
 
 static Window *window;
 static Window *messageWindow;
+static Window *splash;
+static AppTimer *timer;
 
 // Key values for AppMessage Dictionary
 enum {
@@ -17,6 +20,7 @@ enum {
 // You have more control than with a simple menu layer
 static MenuLayer *menu_layer;
 static TextLayer *message_layer;
+static TextLayer *splash_layer;
 
 // Menu items can optionally have an icon drawn with them
 //static GBitmap *menu_icons[NUM_MENU_ICONS];
@@ -31,6 +35,7 @@ char *option1 = "afasfsfsfaksjf";
 char *option2 = "basvaecweaceas";
 char *option3 = "awgbzxacwecgal";
 char *option4 = "Adfavvawceckja";
+char *message_text = "From: Austin Eng\n This is a test message. I really hope it works! This is a test message. I really hope it works! This is a test message. I really hope it works!";
 
 // A callback is used to specify the amount of sections of menu items
 // With this, you can dynamically add and remove sections
@@ -118,6 +123,21 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
   }*/
 
 }
+void splash_window_load(Window *splashWindow) {
+  Layer *window_layer = window_get_root_layer(splashWindow);
+  GRect bounds = layer_get_frame(window_layer);
+
+  splash_layer = text_layer_create(bounds);
+  text_layer_set_font(splash_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  text_layer_set_background_color(splash_layer, GColorClear);
+  text_layer_set_text_color(splash_layer, GColorBlack);
+  text_layer_set_text(splash_layer, "Pebblyo");
+
+  layer_add_child(window_layer, text_layer_get_layer(splash_layer));
+}
+void splash_window_unload(Window *splashWindow) {
+  text_layer_destroy(splash_layer);
+}
 
 void message_window_load(Window *messageWindow) {
   Layer *window_layer = window_get_root_layer(messageWindow);
@@ -127,7 +147,7 @@ void message_window_load(Window *messageWindow) {
   text_layer_set_font(message_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_background_color(message_layer, GColorClear);
   text_layer_set_text_color(message_layer, GColorBlack);
-  text_layer_set_text(message_layer, "From: Austin Eng\n This is a test message. I really hope it works! ");
+  text_layer_set_text(message_layer, message_text);
 
   layer_add_child(window_layer, text_layer_get_layer(message_layer));
 }
@@ -216,7 +236,6 @@ void send_message(void){
 
 // Called when a message is received from PebbleKitJS
 static void in_received_handler(DictionaryIterator *received, void *context) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "recieved something! not sure what it is yet...");
   /*Tuple *tuple1;
   Tuple *tuple2;
 
@@ -286,20 +305,33 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
         APP_LOG(APP_LOG_LEVEL_INFO, "setting element 4");
         break;
       case 6:
-        APP_LOG(APP_LOG_LEVEL_INFO, "moving index");
+        APP_LOG(APP_LOG_LEVEL_INFO, "moving index to %d", (((int)tuple->value->uint16)));
         MenuIndex index;
-        APP_LOG(APP_LOG_LEVEL_INFO, "moving index to %d", (((int)tuple->value->uint16))-48);
-        index.row = (((int)tuple->value->uint16)-48);
+        index.row = (((int)tuple->value->uint16));
         index.section = 0;
         menu_layer_set_selected_index(menu_layer, index , MenuRowAlignCenter, true);
         break;
       case 7:
         APP_LOG(APP_LOG_LEVEL_INFO, "switching to message page");
-        window_stack_push(messageWindow, true);
+        strcpy(message_text, tuple->value->cstring);
+
+        if(window_stack_get_top_window()!=messageWindow){
+          if(window_stack_contains_window(messageWindow)){
+            window_stack_pop(true);
+          } else {
+            window_stack_push(messageWindow, true);
+          }
+        }
         break;
       case 8:
         APP_LOG(APP_LOG_LEVEL_INFO, "switching to list page");
-        window_stack_push(window, true);
+        if(window_stack_get_top_window()!=window){
+          if(window_stack_contains_window(window)){
+            window_stack_pop(true);
+          } else {
+            window_stack_push(window, true);
+          }
+        }
     }
     tuple = dict_read_next(received);
   }
@@ -313,9 +345,20 @@ static void in_dropped_handler(AppMessageResult reason, void *context) {
 static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
 }
 
+static void timer_callback(void *data) {
+  //AccelData accel = (AccelData) { .x = 0, .y = 0, .z = 0 };
+
+  //accel_service_peek(&accel);
+
+  //APP_LOG(APP_LOG_LEVEL_INFO, "%d, %d, %d", (int)accel.x, (int)accel.y, (int)accel.z);
+
+  //timer = app_timer_register(ACCEL_STEP_MS, timer_callback, NULL);
+}
+
 static void init() {
   messageWindow = window_create();
   window = window_create();
+  splash = window_create();
 
   window_set_window_handlers(messageWindow, (WindowHandlers) {
     .load = message_window_load,
@@ -327,11 +370,20 @@ static void init() {
     .load = window_load,
     .unload = window_unload,
   });
+
+  window_set_window_handlers(splash, (WindowHandlers) {
+    .load = splash_window_load,
+    .unload = splash_window_unload,
+  });
+
+  accel_data_service_subscribe(0, NULL);
+  timer = app_timer_register(ACCEL_STEP_MS, timer_callback, NULL);
 }
 
 static void deinit() {
   window_destroy(messageWindow);
   window_destroy(window);
+  accel_data_service_unsubscribe();
 }
 
 int main(void) {
@@ -341,7 +393,9 @@ int main(void) {
   changeOption(0, "Kavin");
   changeOption(3, "Austin");
 
-  window_stack_push(window, true /* Animated */);
+  window_stack_push(splash, true);
+
+  //window_stack_push(messageWindow, true /* Animated */);
 
   // Register AppMessage handlers
   app_message_register_inbox_received(in_received_handler);
