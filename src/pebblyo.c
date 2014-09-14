@@ -30,6 +30,7 @@ static TextLayer *splash_layer;
 // You can draw arbitrary things in a menu item such as a background
 //static GBitmap *menu_background;
 
+int angle = 0;
 int oldangle = 0;
 
 char *option0 = "asfdsafsdfasfd";
@@ -236,6 +237,28 @@ void send_message(void){
     app_message_outbox_send();
 }
 
+unsigned long isqrt(unsigned long x)
+{
+    register unsigned long op, res, one;
+
+    op = x;
+    res = 0;
+
+    /* "one" starts at the highest power of four <= than the argument. */
+    one = 1 << 30;  /* second-to-top bit set */
+    while (one > op) one >>= 2;
+
+    while (one != 0) {
+        if (op >= res + one) {
+            op -= res + one;
+            res += one << 1;  // <-- faster than 2 * one
+        }
+        res >>= 1;
+        one >>= 2;
+    }
+    return res;
+}
+
 // Called when a message is received from PebbleKitJS
 static void in_received_handler(DictionaryIterator *received, void *context) {
   /*Tuple *tuple1;
@@ -298,6 +321,28 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
         break;
       case 7:
         APP_LOG(APP_LOG_LEVEL_INFO, "switching to message page");
+
+        AccelData accel = (AccelData) { .x = 0, .y = 0, .z = 0 };
+        double sum_of_squares;
+        long square_root;
+
+        accel_service_peek(&accel);
+
+        sum_of_squares = (double)(accel.x * accel.x) + (double)(accel.y * accel.y) + (double)(accel.z * accel.z);
+        square_root = isqrt((long)sum_of_squares);
+        angle = accel.z * -100 / (int)square_root;
+
+        if(angle > 90) {
+          APP_LOG(APP_LOG_LEVEL_INFO, "in the zone");
+
+          DictionaryIterator *iter;
+          app_message_outbox_begin(&iter);
+          Tuplet value = TupletInteger(11, 12);
+          dict_write_tuplet(iter, &value);
+          app_message_outbox_send();
+        }
+        oldangle=angle;
+
         strcpy(message_text, tuple->value->cstring);
 
         if(window_stack_get_top_window()!=messageWindow){
@@ -330,31 +375,8 @@ static void in_dropped_handler(AppMessageResult reason, void *context) {
 static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
 }
 
-unsigned long isqrt(unsigned long x)
-{
-    register unsigned long op, res, one;
-
-    op = x;
-    res = 0;
-
-    /* "one" starts at the highest power of four <= than the argument. */
-    one = 1 << 30;  /* second-to-top bit set */
-    while (one > op) one >>= 2;
-
-    while (one != 0) {
-        if (op >= res + one) {
-            op -= res + one;
-            res += one << 1;  // <-- faster than 2 * one
-        }
-        res >>= 1;
-        one >>= 2;
-    }
-    return res;
-}
-
 static void timer_callback(void *data) {
   AccelData accel = (AccelData) { .x = 0, .y = 0, .z = 0 };
-  int angle;
   double sum_of_squares;
   long square_root;
 
