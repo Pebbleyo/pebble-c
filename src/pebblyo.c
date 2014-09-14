@@ -292,6 +292,7 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
     switch (tuple->key) {
       case 0:
         APP_LOG(APP_LOG_LEVEL_INFO, "got a 0");
+        break;
       case 1:
         changeOption(0, tuple->value->cstring);
         APP_LOG(APP_LOG_LEVEL_INFO, "setting element 0");
@@ -317,7 +318,9 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
         MenuIndex index;
         index.row = (((int)tuple->value->uint16));
         index.section = 0;
-        menu_layer_set_selected_index(menu_layer, index , MenuRowAlignCenter, true);
+        if(window_stack_get_top_window()==window){
+          menu_layer_set_selected_index(menu_layer, index , MenuRowAlignCenter, true);
+        }
         break;
       case 7:
         APP_LOG(APP_LOG_LEVEL_INFO, "switching to message page");
@@ -368,7 +371,8 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
       case 9:
         APP_LOG(APP_LOG_LEVEL_INFO, "back to welcome");
         if(window_stack_contains_window(splash)){
-          window_stack_pop(true);
+          window_stack_pop(false);
+          window_stack_push(splash, false);
         } else {
           window_stack_push(splash, true);
         }
