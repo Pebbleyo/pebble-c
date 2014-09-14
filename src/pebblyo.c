@@ -130,10 +130,10 @@ void splash_window_load(Window *splashWindow) {
   GRect bounds = layer_get_frame(window_layer);
 
   splash_layer = text_layer_create(bounds);
-  text_layer_set_font(splash_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  text_layer_set_font(splash_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   text_layer_set_background_color(splash_layer, GColorClear);
   text_layer_set_text_color(splash_layer, GColorBlack);
-  text_layer_set_text(splash_layer, "Pebblyo");
+  text_layer_set_text(splash_layer, "Welcome to Swiper!");
 
   layer_add_child(window_layer, text_layer_get_layer(splash_layer));
 }
@@ -146,7 +146,7 @@ void message_window_load(Window *messageWindow) {
   GRect bounds = layer_get_frame(window_layer);
 
   message_layer = text_layer_create(bounds);
-  text_layer_set_font(message_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  text_layer_set_font(message_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
   text_layer_set_background_color(message_layer, GColorClear);
   text_layer_set_text_color(message_layer, GColorBlack);
   text_layer_set_text(message_layer, message_text);
