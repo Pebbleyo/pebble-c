@@ -345,23 +345,34 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
 
         strcpy(message_text, tuple->value->cstring);
 
-        if(window_stack_get_top_window()!=messageWindow){
+        //if(window_stack_get_top_window()!=messageWindow){
           if(window_stack_contains_window(messageWindow)){
-            window_stack_pop(true);
+            window_stack_pop(false);
+            window_stack_push(messageWindow, false);
           } else {
             window_stack_push(messageWindow, true);
           }
-        }
+        //}
         break;
       case 8:
         APP_LOG(APP_LOG_LEVEL_INFO, "switching to list page");
-        if(window_stack_get_top_window()!=window){
+        //if(window_stack_get_top_window()!=window){
           if(window_stack_contains_window(window)){
-            window_stack_pop(true);
+            window_stack_pop(false);
+            window_stack_push(window, false);
           } else {
             window_stack_push(window, true);
           }
+        //}
+        break;
+      case 9:
+        APP_LOG(APP_LOG_LEVEL_INFO, "back to welcome");
+        if(window_stack_contains_window(splash)){
+          window_stack_pop(true);
+        } else {
+          window_stack_push(splash, true);
         }
+        break;
     }
     tuple = dict_read_next(received);
   }
